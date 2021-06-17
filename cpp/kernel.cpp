@@ -37,6 +37,28 @@
 #include <idt.h>
 #include <kbdtest.h>
 #include <gdt.h>
+#include <ksync.h>
+#include <cpuid.h>
+
+char *int2Hex(uint64_t x, char *buf, size_t size, int radix) {
+	// expect buf to be n characters long - last one gets \0
+	buf[size - 1] = '\0';
+
+	uint64_t num = x;
+	int i = size - 1;
+
+	// (void)x;
+	do {
+		buf[--i] = "0123456789ABCDEF"[num % radix];
+		num /= radix;
+	} while (num > 0 && i);
+
+    int j = i;
+
+	while (--i >= 0) buf[i] = '0';
+
+	return buf + j;
+}
 
 uint8_t initHeap[65535];
 
@@ -61,13 +83,11 @@ extern "C" void globalCtors() {
 
 SegmentDescriptor gdt[8];
 
-G2BootConsole *console;
-G2PIC *pic8259;
+extern G2BootConsole console;
 
 class G2Kernel {
 
 public:
-	Heap heap = Heap(initHeap, 65535);
     
     G2Kernel() {
         /*** NOTE: this code runs on all cores in parallel ***/
@@ -84,15 +104,66 @@ public:
     }
     
     void init(void) {
-    	console = (G2BootConsole *)heap.malloc(sizeof(G2BootConsole));
-    	*console = G2BootConsole(&fb, (psf2_t *)&_binary_font_psf_start,
-    		bootboot.fb_width, bootboot.fb_height, bootboot.fb_scanline);
-    	
-        console->puts("GEN/2 System Product\n\(C) 2021 vmlinuz719. All rights reserved. \n\n");
+        console.puts("GEN/2 System Product\n\(C) 2021 vmlinuz719. All rights reserved. \n\n");
+
+        char buf[17];
+
+        int2Hex(bootboot.initrd_ptr, buf, sizeof(buf), 16);
+        console.puts("IMG: addr 0x");
+        console.puts(buf);
+
+        int2Hex(bootboot.initrd_size, buf, sizeof(buf), 10);
+        console.puts(" size ");
+        console.puts(buf);
+
+        int2Hex(bootboot.initrd_size + bootboot.initrd_ptr, buf, sizeof(buf), 16);
+        console.puts(" limit 0x");
+        console.puts(buf);
+
+        console.puts("\n");
+
+        MMapEnt *mmap_ent = &bootboot.mmap;
+        for (unsigned int i = 0; i < (bootboot.size - 128) / 16; i++) {
+            uint64_t ptr = (mmap_ent + i)->ptr;
+            uint64_t size = (mmap_ent + i)->size;
+            console.puts("MEM: ");
+
+            int2Hex(ptr, buf, sizeof(buf), 16);
+            console.puts("addr 0x");
+            console.puts(buf);
+
+            uint64_t actualSize = size & 0xFFFFFFFFFFFFFFF0;
+
+            int2Hex(actualSize, buf, sizeof(buf), 10);
+            console.puts(" size ");
+            console.puts(buf);
+
+            int2Hex(actualSize + ptr, buf, sizeof(buf), 16);
+            console.puts(" limit 0x");
+            console.puts(buf);
+
+            console.puts(" type ");
+            switch(size & 0xF) {
+                case MMAP_USED:
+                    console.puts("USED");
+                    break;
+                case MMAP_FREE:
+                    console.puts("FREE");
+                    break;
+                case MMAP_ACPI:
+                    console.puts("ACPI");
+                    break;
+                case MMAP_MMIO:
+                    console.puts("MMIO");
+                    break;
+            }
+
+            console.puts("\n");
+        }
      }
     
     void hang(void) {
-    	console->puts("SYS$COMPLETE -- ALL AVAILABLE FUNCTIONS COMPLETED\n");
+    	console.puts(" -- ALL AVAILABLE FUNCTIONS COMPLETED\n");
     	while(1) {asm("hlt");};
     }
 
@@ -104,11 +175,24 @@ public:
 /******************************************
  * Entry point, called by BOOTBOOT Loader *
  ******************************************/
+
 static G2Kernel kernel = G2Kernel();
+G2BootConsole console = G2BootConsole(&fb, (psf2_t *)&_binary_font_psf_start,
+    bootboot.fb_width, bootboot.fb_height, bootboot.fb_scanline);
 
 int main() {
+    // We want to halt all but the bootstrap processor for now
+    unsigned int eax, ebx, ecx, edx;
+    __get_cpuid(1, &eax, &ebx, &ecx, &edx);
+    unsigned char localApicId = (ebx & 0xFF000000) >> 24;
+    if (localApicId != bootboot.bspid) {
+        while(1) {asm("hlt");};
+    }
+
     globalCtors();
+
     kernel.init();
     kernel.hang();
+
     return 0;
 }

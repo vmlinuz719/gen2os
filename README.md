@@ -12,4 +12,6 @@ UPDATE 6/16/21: I am alive. A lot of the code I have written needs to be scraped
 * Not started interrupts until I made my own working GDT (with Task State Segment for good measure)
 * Paid more attention to the BOOTBOOT data structure, it says exactly where in physical memory the initrd image is loaded so we can make our own page table
 
+In addition, the build will soon depend upon [the BOOTBOOT mkbootimg utility](https://gitlab.com/bztsrc/bootboot/tree/master/mkbootimg) to generate bootable images.
+
 Stay tuned!

@@ -47,6 +47,17 @@ SECTIONS
         *(.rodata .rodata.*)                   /* data */
         *(.data .data.*)
     } :boot
+    .xtors : {
+        start_ctors = .;
+        KEEP(*(.init_array));
+        KEEP(*(SORT_BY_INIT_PRIORITY( .init_array.* )));
+        end_ctors = .;
+
+        start_dtors = .;
+        KEEP(*(.fini_array));
+        KEEP(*(SORT_BY_INIT_PRIORITY( .fini_array.* )));
+        end_dtors = .;
+    } :boot
     .bss (NOLOAD) : {                          /* bss */
         . = ALIGN(16);
         *(.bss .bss.*)

@@ -33,7 +33,7 @@ LD = x86_64-elf-ld
 STRIP = x86_64-elf-strip
 READELF = x86_64-elf-readelf
 AS = x86_64-elf-gcc
-CPPFLAGS = -Wall -fpic -ffreestanding -fno-stack-protector -fno-exceptions -fno-rtti -nostdlib -I../include/
+CPPFLAGS = -Wall -fpic -ffreestanding -fno-use-cxa-atexit -fno-stack-protector -fno-exceptions -fno-rtti -nostdlib -fno-leading-underscore -I../include/
 LDFLAGS = -L. -lgcc -nostdlib -T link.ld
 STRIPFLAGS = -s -K mmio -K fb -K bootboot -K environment -K initstack
 
@@ -60,7 +60,7 @@ KRNL8664.SYS: kernel.cpp heap.cpp gdt.cpp idt.cpp 8259.cpp bootcon.cpp kbdtest.c
 	$(READELF) -hls KRNL8664.SYS > krnl8664.txt
 
 INITRD: KRNL8664.SYS
-	find ./*.SYS | cpio -H crc -o | gzip > INITRD
+	find ./*.SYS | cpio -H crc -o | gzip > INITCPIO.SYS
 
 clean:
-	rm *.o *.txt *.SYS INITRD || true
+	rm *.o *.txt *.SYS || true

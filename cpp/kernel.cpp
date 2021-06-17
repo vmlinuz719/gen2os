@@ -45,6 +45,20 @@ extern BOOTBOOT bootboot;               // see bootboot.h
 extern unsigned char environment[4096]; // configuration, UTF-8 text key=value pairs
 extern uint8_t fb;                      // linear framebuffer mapped
 
+typedef void (*xtor)();
+extern "C" xtor start_ctors;
+extern "C" xtor end_ctors;
+extern "C" xtor start_dtors;
+extern "C" xtor end_dtors;
+
+extern "C" void globalCtors() {
+    for (xtor *i = &start_ctors; i != &end_ctors; i++) {
+        (*i)();
+    }
+}
+
+// don't bother with global dtors
+
 SegmentDescriptor gdt[8];
 
 G2BootConsole *console;
@@ -75,29 +89,7 @@ public:
     		bootboot.fb_width, bootboot.fb_height, bootboot.fb_scanline);
     	
         console->puts("GEN/2 System Product\n\(C) 2021 vmlinuz719. All rights reserved. \n\n");
-        
-        console->puts("SYS$INIT8259 -- INITIALIZING LEGACY INTERRUPT CONTROLLER(S)\n");
-        G2Inline::clearInts();
-        
-        pic8259 = (G2PIC *)heap.malloc(sizeof(G2PIC));
-        *pic8259 = G2PIC(LEADER_PIC_REMAP, FOLLOWER_PIC_REMAP);
-        pic8259->maskAll();
-        G2Inline::setInts();
-        
-        console->puts("SYS$INITTABL -- INITIALIZING SEGMENT/INTERRUPT DESCRIPTOR TABLES\n");
-        // initGDT(gdt, 8); // use default GDT from BOOTBOOT instead for now
-        
-        InterruptDescriptor *tbl = (InterruptDescriptor *)heap.malloc(sizeof(InterruptDescriptor) * 256);
-        G2IDT *idt = (G2IDT *)heap.malloc(sizeof(G2IDT));
-        *idt = G2IDT(tbl, 256);
-        
-        console->puts("SYS$LOLZDEMO -- REGISTERING SILLY KEYBOARD TEST HANDLER\n");
-        idt->registerHandler(0x31, (void *)kbdTest, true, 0, INTERRUPT_GATE);
-        idt->registerHandler(0x6, (void *)illegal, true, 0, TRAP_GATE);
-        idt->registerHandler(0x8, (void *)KIWF, true, 0, TRAP_GATE);
-        idt->registerHandler(0xD, (void *)generalProtection, true, 0, TRAP_GATE);
-        pic8259->clearMask(1);
-    }
+     }
     
     void hang(void) {
     	console->puts("SYS$COMPLETE -- ALL AVAILABLE FUNCTIONS COMPLETED\n");
@@ -112,8 +104,10 @@ public:
 /******************************************
  * Entry point, called by BOOTBOOT Loader *
  ******************************************/
+static G2Kernel kernel = G2Kernel();
+
 int main() {
-    G2Kernel kernel = G2Kernel();
+    globalCtors();
     kernel.init();
     kernel.hang();
     return 0;

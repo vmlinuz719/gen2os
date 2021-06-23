@@ -1,0 +1,11 @@
+ {
+    "diskguid": "00000000-0000-0000-0000-000000000000",
+    "disksize": 128,
+    "align": 1024,
+    "iso9660": true,
+    "config": "boot/SYSTART.INI",
+    "initrd": { "type": "tar", "gzip": true, "directory": "boot"},
+    "partitions": [
+        { "type": "boot", "size": 64 }
+    ]
+}

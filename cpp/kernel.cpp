@@ -79,6 +79,8 @@ public:
 
         char buf[17];
 
+        initGDT(gdt, 8);
+
         int2Hex(bootboot.initrd_ptr, buf, sizeof(buf), 16);
         console.puts("IMG: addr 0x");
         console.puts(buf);

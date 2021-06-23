@@ -41,11 +41,11 @@
                      SEG_PRIV(0)     | SEG_DATA_RDWR
  
 #define GDT_CODE_PL3 SEG_DESCTYPE(1) | SEG_PRES(1) | SEG_SAVL(0) | \
-                     SEG_LONG(0)     | SEG_SIZE(1) | SEG_GRAN(1) | \
+                     SEG_LONG(1)     | SEG_SIZE(0) | SEG_GRAN(1) | \
                      SEG_PRIV(3)     | SEG_CODE_EXRD
  
 #define GDT_DATA_PL3 SEG_DESCTYPE(1) | SEG_PRES(1) | SEG_SAVL(0) | \
-                     SEG_LONG(0)     | SEG_SIZE(1) | SEG_GRAN(1) | \
+                     SEG_LONG(1)     | SEG_SIZE(0) | SEG_GRAN(1) | \
                      SEG_PRIV(3)     | SEG_DATA_RDWR
  
 static inline uint64_t createDescriptor

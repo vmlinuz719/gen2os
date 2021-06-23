@@ -12,9 +12,22 @@ void initGDT(SegmentDescriptor *gdt, int descriptors) {
 	gdt[4] = createDescriptor(0, 0xFFFFF, (GDT_DATA_PL3));
 
 	gdtr.base = gdt;
-	gdtr.size = 32 * descriptors - 1;
+	gdtr.size = 8 * descriptors - 1;
 
 	__asm__ __volatile__ ("lgdt (%0)": : "r" (&gdtr));
+
+    __asm__ __volatile__ (
+        "sub $16, %rsp \n"
+        "movq $8, 8(%rsp) \n"
+        "movabsq $flushGDT, %rax \n"
+        "mov %rax, (%rsp) \n"
+        "lretq \n"
+        "flushGDT: \n"
+        "mov $0x10, %ax \n"
+        "mov %ax, %ds \n"
+        "mov %ax, %es \n"
+        "mov %ax, %ss \n"
+    );
 	// flushGDT();
 }
 

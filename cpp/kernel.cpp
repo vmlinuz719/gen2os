@@ -78,20 +78,17 @@ public:
         console.puts("GEN/2 System Product\n\(C) 2021 vmlinuz719. All rights reserved. \n\n");
 
         char buf[17];
+        char *sz;
 
         initGDT(gdt, 8);
 
         int2Hex(bootboot.initrd_ptr, buf, sizeof(buf), 16);
-        console.puts("IMG: addr 0x");
+        console.puts("System image @ 0x");
         console.puts(buf);
 
-        int2Hex(bootboot.initrd_size, buf, sizeof(buf), 10);
+        sz = int2Hex(bootboot.initrd_size, buf, sizeof(buf), 10);
         console.puts(" size ");
-        console.puts(buf);
-
-        int2Hex(bootboot.initrd_size + bootboot.initrd_ptr, buf, sizeof(buf), 16);
-        console.puts(" limit 0x");
-        console.puts(buf);
+        console.puts(sz);
 
         console.puts("\n");
 
@@ -141,7 +138,7 @@ public:
             console.puts("\n");
         }
 
-        char *sz = int2Hex(maxsize / 4096, buf, sizeof(buf), 10);
+        sz = int2Hex(maxsize / 4096, buf, sizeof(buf), 10);
         console.puts("BMP: Using ");
         console.puts(sz);
         int2Hex(maxptr, buf, sizeof(buf), 16);
@@ -151,20 +148,37 @@ public:
 
         bmp = Bitmap((uint8_t *) maxptr, (size_t) (maxsize / 4096));
 
-        Allocation alloc1 = bmp.allocate(1);
-
-        sz = int2Hex(alloc1.numBlocks, buf, sizeof(buf), 10);
-        console.puts("Allocated ");
-        console.puts(sz);
-        int2Hex((uint64_t) alloc1.offset, buf, sizeof(buf), 16);
-        console.puts(" physical blocks at 0x");
+        uint64_t initCR3 = 0;
+        uint64_t *initPML4;
+        asm("mov %%cr3,%0" : "=r"(initCR3));
+        initPML4 = (uint64_t *) (initCR3 & ~(0xFFFL));
+        int2Hex((uint64_t) initPML4, buf, sizeof(buf), 16);
+        console.puts("Initial PML4 @ 0x");
         console.puts(buf);
         console.puts("\n");
 
-     }
+        // Let's try rebuilding the PML4
+
+        uint64_t *newPML4;
+        Allocation a = bmp.allocate(1);
+        newPML4 = (uint64_t *) a.offset;
+        for (int i = 0; i < 256; i++) {
+            newPML4[i] = 0;
+        }
+        for (int i = 0; i < 512; i++) {
+            newPML4[i] = initPML4[i];
+        }
+
+        int2Hex((uint64_t) newPML4, buf, sizeof(buf), 16);
+        console.puts("New PML4 @ 0x");
+        console.puts(buf);
+        console.puts("\n");
+
+        asm("mov %0, %%cr3" :: "r"(newPML4));
+    }
     
     void hang(void) {
-    	console.puts(" -- ALL AVAILABLE FUNCTIONS COMPLETED\n");
+    	console.puts("\n -- ALL AVAILABLE FUNCTIONS COMPLETED\n");
     	while(1) {asm("hlt");};
     }
 

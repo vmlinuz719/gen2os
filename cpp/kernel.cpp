@@ -165,7 +165,7 @@ public:
         for (int i = 0; i < 256; i++) {
             newPML4[i] = 0;
         }
-        for (int i = 0; i < 512; i++) {
+        for (int i = 256; i < 512; i++) {
             newPML4[i] = initPML4[i];
         }
 

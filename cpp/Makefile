@@ -16,7 +16,7 @@ OBJ_LINK_LIST:=$(CRTI_OBJ) $(CRTBEGIN_OBJ) $(OBJS) $(CRTEND_OBJ) $(CRTN_OBJ)
 
 all: KRNL8664.SYS
 
-KRNL8664.SYS: kernel.cpp heap.cpp gdt.cpp idt.cpp 8259.cpp bootcon.cpp spinlock.cpp bitmap.cpp # kbdtest.cpp
+KRNL8664.SYS: kernel.cpp heap.cpp gdt.cpp idt.cpp 8259.cpp bootcon.cpp spinlock.cpp bitmap.cpp kbdtest.cpp
 	$(CPP) $(CPPFLAGS) -mno-red-zone -c kernel.cpp -o kernel.o
 	$(CPP) $(CPPFLAGS) -mno-red-zone -c heap.cpp -o heap.o
 	$(CPP) $(CPPFLAGS) -mno-red-zone -c gdt.cpp -o gdt.o

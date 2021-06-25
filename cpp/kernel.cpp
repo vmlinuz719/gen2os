@@ -104,43 +104,43 @@ public:
         for (unsigned int i = 0; i < (bootboot.size - 128) / 16; i++) {
             uint64_t ptr = (mmap_ent + i)->ptr;
             uint64_t size = (mmap_ent + i)->size;
-            console.puts("MEM: ");
-
-            int2Hex(ptr, buf, sizeof(buf), 16);
-            console.puts("addr 0x");
-            console.puts(buf);
+//             console.puts("MEM: ");
+//
+//             int2Hex(ptr, buf, sizeof(buf), 16);
+//             console.puts("addr 0x");
+//             console.puts(buf);
 
             uint64_t actualSize = size & 0xFFFFFFFFFFFFFFF0;
 
-            int2Hex(actualSize, buf, sizeof(buf), 10);
-            console.puts(" size ");
-            console.puts(buf);
-
-            int2Hex(actualSize + ptr, buf, sizeof(buf), 16);
-            console.puts(" limit 0x");
-            console.puts(buf);
-
-            console.puts(" type ");
+//             int2Hex(actualSize, buf, sizeof(buf), 10);
+//             console.puts(" size ");
+//             console.puts(buf);
+//
+//             int2Hex(actualSize + ptr, buf, sizeof(buf), 16);
+//             console.puts(" limit 0x");
+//             console.puts(buf);
+//
+//             console.puts(" type ");
             switch(size & 0xF) {
                 case MMAP_USED:
-                    console.puts("USED");
+                    // console.puts("USED");
                     break;
                 case MMAP_FREE:
-                    console.puts("FREE");
+                    // console.puts("FREE");
                     if (actualSize > maxsize) {
                         maxsize = actualSize;
                         maxptr = ptr;
                     }
                     break;
                 case MMAP_ACPI:
-                    console.puts("ACPI");
+                    // console.puts("ACPI");
                     break;
                 case MMAP_MMIO:
-                    console.puts("MMIO");
+                    // console.puts("MMIO");
                     break;
             }
 
-            console.puts("\n");
+            // console.puts("\n");
         }
 
         sz = int2Hex(maxsize / 4096, buf, sizeof(buf), 10);
@@ -189,7 +189,17 @@ public:
     
     void hang(void) {
     	console.puts("\n -- ALL AVAILABLE FUNCTIONS COMPLETED\n");
-    	while(1) {asm("hlt");};
+
+        char *c = "-\\|/";
+        int x = 0;
+
+    	while(1) {
+            console.putglyph(*(c + x), 78, 1);
+            x = (x + 1) % 4;
+            for (uint32_t i = 0; i <= 0x3700000; i++) {
+                __asm__ __volatile__ ("nop");
+            }
+        };
     }
 
     /* destructor */

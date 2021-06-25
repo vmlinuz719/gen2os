@@ -2,6 +2,7 @@
 #include <8259.h>
 #include <kbdtest.h>
 #include <port.h>
+#include <regsave.h>
 
 extern G2BootConsole console;
 extern G2PIC pic8259;
@@ -23,10 +24,15 @@ void int2Hex(uint64_t x, char *buf, size_t size) {
 }
 
 __attribute__((interrupt)) void kbdTest(ExceptionStackFrame *frame) {
+    EM64RegisterSave s;
+    saveAll(&s);
+
 	console.puts("Keyboard event!\n");
 	G2Inline::inb(0x60);
 	pic8259.EOI(1);
-	asm("sti");
+
+    asm("sti");
+
 	return;
 }
 

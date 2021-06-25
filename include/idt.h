@@ -31,7 +31,7 @@ public:
 	// so GCC wouldn't choke
 	// Now, if you use __attribute__((interrupt)),
 	// you should be able to stuff your functions directly into "wrapper"
-	void registerHandler(int vector, void *wrapper,
+	void registerHandler(int vector, void *wrapper, uint8_t selector,
 		bool present, uint8_t dpl, uint8_t type);
 
 private:

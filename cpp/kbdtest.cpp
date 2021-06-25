@@ -3,8 +3,8 @@
 #include <kbdtest.h>
 #include <port.h>
 
-extern G2BootConsole *console;
-extern G2PIC *pic8259;
+extern G2BootConsole console;
+extern G2PIC pic8259;
 
 void int2Hex(uint64_t x, char *buf, size_t size) {
 	// expect buf to be n characters long - last one gets \0
@@ -23,19 +23,19 @@ void int2Hex(uint64_t x, char *buf, size_t size) {
 }
 
 __attribute__((interrupt)) void kbdTest(ExceptionStackFrame *frame) {
-	console->puts("Keyboard event!\n");
+	console.puts("Keyboard event!\n");
 	G2Inline::inb(0x60);
-	pic8259->EOI(1);
+	pic8259.EOI(1);
 	asm("sti");
 	return;
 }
 
 __attribute__((interrupt)) void KIWF(ExceptionStackFrame *frame, unsigned long int errorCode) {
-	console->puts("SYS$BUGCHECK -- KERNEL MODE FATAL EXCEPTION; HALT NOW\n");
+	console.puts(" -- KERNEL MODE FATAL EXCEPTION; HALT NOW\n");
 	
 	char buf[17];
 	int2Hex(frame->RIP, buf, sizeof(buf));
-	console->puts(buf);
+	console.puts(buf);
 	
 	asm("cli");
 	asm("hlt");
@@ -43,23 +43,23 @@ __attribute__((interrupt)) void KIWF(ExceptionStackFrame *frame, unsigned long i
 }
 
 __attribute__((interrupt)) void illegal(ExceptionStackFrame *frame) {
-	console->puts("SYS$ILLINSTR -- ILLEGAL INSTRUCTION @ 0x");
+	console.puts("SYS$ILLINSTR -- ILLEGAL INSTRUCTION @ 0x");
 	
 	char buf[17];
 	int2Hex(frame->RIP, buf, sizeof(buf));
-	console->puts(buf);
+	console.puts(buf);
 	
-	console->puts("\n");
+	console.puts("\n");
 	return;
 }
 
 __attribute__((interrupt)) void generalProtection(ExceptionStackFrame *frame, unsigned long int errorCode) {
-	console->puts("SYS$GPRFAULT -- GENERAL PROTECTION FAULT 0x");
+	console.puts(" -- GENERAL PROTECTION FAULT 0x");
 	
 	char buf[17];
 	int2Hex(errorCode, buf, sizeof(buf));
-	console->puts(buf);
+	console.puts(buf);
 	
-	console->puts("\n");
+	console.puts("\n");
 	return;
 }

@@ -9,11 +9,9 @@ G2IDT::G2IDT(InterruptDescriptor *idt, size_t size) {
 	this->idt = idtr.base = idt;
 	
 	__asm__ __volatile__ ("lidt (%0)": : "r" (&idtr));
-	
-	G2Inline::setInts();
 }
 
-void G2IDT::registerHandler(int vector, void *wrapper,
+void G2IDT::registerHandler(int vector, void *wrapper, uint8_t selector,
 		bool present, uint8_t dpl, uint8_t type) {
 	G2Inline::clearInts();
 	
@@ -27,7 +25,7 @@ void G2IDT::registerHandler(int vector, void *wrapper,
 	t |= type & 0x0F;
 	
 	idt[vector].offsetLow = dfcall & 0xffff;
-	idt[vector].selector = 0x38; // TODO: replace default CS from BOOTBOOT with our own
+	idt[vector].selector = selector;
 	idt[vector].mustBeZero = idt[vector].ist = 0;
 	idt[vector].type = t; /* INTERRUPT_GATE */
 	idt[vector].offsetMid = (dfcall & 0xffff0000) >> 16;

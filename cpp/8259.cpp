@@ -39,7 +39,7 @@ void G2PIC::EOI(uint8_t irq) {
 	G2Inline::outb(PIC1_COMMAND, PIC_EOI);
 }
 
-void i8259SetMask(uint8_t line) {
+void G2PIC::setMask(uint8_t line) {
 	uint16_t port;
     uint8_t value;
  
@@ -69,7 +69,7 @@ void G2PIC::clearMask(uint8_t line) {
 
 void G2PIC::maskAll(void) {
 	for (int x = 0; x < MAX_IRQ; x++) {
-		i8259SetMask(x);
+		setMask(x);
 	}
 }
 

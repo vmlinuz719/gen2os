@@ -1,33 +1,3 @@
-#
-# mykernel/cpp/Makefile
-#
-# Copyright (C) 2017 - 2021 bzt (bztsrc@gitlab)
-#
-# Permission is hereby granted, free of charge, to any person
-# obtaining a copy of this software and associated documentation
-# files (the "Software"), to deal in the Software without
-# restriction, including without limitation the rights to use, copy,
-# modify, merge, publish, distribute, sublicense, and/or sell copies
-# of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
-#
-# This file is part of the BOOTBOOT Protocol package.
-# @brief An example Makefile for sample kernel
-#
-#
-
 CPP = x86_64-elf-g++
 LD = x86_64-elf-ld
 STRIP = x86_64-elf-strip
@@ -37,7 +7,7 @@ CPPFLAGS = -Wall -fpic -ffreestanding -fno-use-cxa-atexit -fno-stack-protector -
 LDFLAGS = -L. -lgcc -nostdlib -T link.ld
 STRIPFLAGS = -s -K mmio -K fb -K bootboot -K environment -K initstack
 
-OBJS:=kernel.o heap.o gdt.o idt.o bootcon.o spinlock.o bitmap.o font.o # kbdtest.o 8259.o
+OBJS:=kernel.o heap.o gdt.o idt.o bootcon.o spinlock.o bitmap.o font.o kbdtest.o 8259.o
 CRTI_OBJ= 
 CRTBEGIN_OBJ:= 
 CRTEND_OBJ:= 
@@ -53,9 +23,9 @@ KRNL8664.SYS: kernel.cpp heap.cpp gdt.cpp idt.cpp 8259.cpp bootcon.cpp spinlock.
 	$(CPP) $(CPPFLAGS) -mno-red-zone -c idt.cpp -o idt.o
 	$(CPP) $(CPPFLAGS) -mno-red-zone -c spinlock.cpp -o spinlock.o
 	$(CPP) $(CPPFLAGS) -mno-red-zone -c bitmap.cpp -o bitmap.o
-	# $(CPP) $(CPPFLAGS) -mno-red-zone -c 8259.cpp -o 8259.o
+	$(CPP) $(CPPFLAGS) -mno-red-zone -c 8259.cpp -o 8259.o
 	$(CPP) $(CPPFLAGS) -mno-red-zone -c bootcon.cpp -o bootcon.o
-	# $(CPP) $(CPPFLAGS) -mgeneral-regs-only -mno-red-zone -c kbdtest.cpp -o kbdtest.o
+	$(CPP) $(CPPFLAGS) -mgeneral-regs-only -mno-red-zone -c kbdtest.cpp -o kbdtest.o
 	$(LD) -r -b binary -o font.o font.psf
 	$(LD) $(LDFLAGS) $(OBJS) -o KRNL8664.SYS
 	$(STRIP) $(STRIPFLAGS) KRNL8664.SYS

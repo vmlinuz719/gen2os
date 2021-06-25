@@ -53,8 +53,10 @@ extern "C" void globalCtors() {
 // don't bother with global dtors
 
 SegmentDescriptor gdt[8];
+InterruptDescriptor idt[64];
 
 extern G2BootConsole console;
+extern G2PIC pic8259;
 
 Bitmap bmp((uint8_t *) 0, 0);
 
@@ -62,6 +64,8 @@ class G2Kernel {
 
 public:
     
+    G2IDT table = G2IDT(idt, 64);
+
     G2Kernel() {
         int x, y, s=bootboot.fb_scanline;
 
@@ -81,6 +85,7 @@ public:
         char *sz;
 
         initGDT(gdt, 8);
+        pic8259.maskAll();
 
         int2Hex(bootboot.initrd_ptr, buf, sizeof(buf), 16);
         console.puts("System image @ 0x");
@@ -175,6 +180,11 @@ public:
         console.puts("\n");
 
         asm("mov %0, %%cr3" :: "r"(newPML4));
+
+        table.registerHandler(0x21, (void *)kbdTest, 0x08, true, 0, INTERRUPT_GATE);
+        pic8259.clearMask(1);
+
+        G2Inline::setInts();
     }
     
     void hang(void) {
@@ -194,6 +204,7 @@ public:
 static G2Kernel kernel = G2Kernel();
 G2BootConsole console = G2BootConsole(&fb, (psf2_t *)&_binary_font_psf_start,
     bootboot.fb_width, bootboot.fb_height, bootboot.fb_scanline);
+G2PIC pic8259 = G2PIC(32, 48);
 
 int main() {
     // We want to halt all but the bootstrap processor for now

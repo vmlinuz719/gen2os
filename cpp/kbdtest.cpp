@@ -1,11 +1,11 @@
 #include <bootcon.h>
-#include <8259.h>
+#include <Platform/PCx64_Uniprocessor/8259.h>
 #include <kbdtest.h>
 #include <port.h>
 #include <regsave.h>
 
 extern G2BootConsole console;
-extern G2PIC pic8259;
+extern Pc8259 pic8259;
 
 void int2Hex(uint64_t x, char *buf, size_t size) {
 	// expect buf to be n characters long - last one gets \0

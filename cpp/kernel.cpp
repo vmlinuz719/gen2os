@@ -1,15 +1,14 @@
 #include <stdint.h>
 #include <bootboot.h>
-#include <heap.h>
 #include <bootcon.h>
-#include <8259.h>
 #include <port.h>
-#include <idt.h>
 #include <kbdtest.h>
-#include <gdt.h>
+#include <Platform/PCx64_Uniprocessor/gdt.h>
 #include <ksync.h>
 #include <cpuid.h>
 #include <bitmap.h>
+#include <Platform/PCx64_Uniprocessor/idt.h>
+#include <Platform/PCx64_Uniprocessor/8259.h>
 
 char *int2Hex(uint64_t x, char *buf, size_t size, int radix) {
 	// expect buf to be n characters long - last one gets \0
@@ -31,8 +30,6 @@ char *int2Hex(uint64_t x, char *buf, size_t size, int radix) {
 	return buf + j;
 }
 
-uint8_t initHeap[65535];
-
 /* imported virtual addresses, see linker script */
 extern BOOTBOOT bootboot;               // see bootboot.h
 extern unsigned char environment[4096]; // configuration, UTF-8 text key=value pairs
@@ -53,10 +50,9 @@ extern "C" void globalCtors() {
 // don't bother with global dtors
 
 SegmentDescriptor gdt[8];
-InterruptDescriptor idt[64];
 
 extern G2BootConsole console;
-extern G2PIC pic8259;
+extern Pc8259 pic8259;
 
 Bitmap bmp((uint8_t *) 0, 0);
 
@@ -64,7 +60,7 @@ class G2Kernel {
 
 public:
     
-    G2IDT table = G2IDT(idt, 64);
+    PcIDT table = PcIDT();
 
     G2Kernel() {
         int x, y, s=bootboot.fb_scanline;
@@ -79,7 +75,7 @@ public:
     }
     
     void init(void) {
-        console.puts("GEN/2 System Product\n\(C) 2021 vmlinuz719. All rights reserved. \n\n");
+        console.puts("GEN/2 System Product - Deprecated Test Driver\n\(C) 2021 vmlinuz719. All rights reserved. \n\n");
 
         char buf[17];
         char *sz;
@@ -181,7 +177,7 @@ public:
 
         asm("mov %0, %%cr3" :: "r"(newPML4));
 
-        table.registerHandler(0x21, (void *)kbdTest, 0x08, true, 0, INTERRUPT_GATE);
+        table.registerHandler(0x31, (void *)kbdTest, 0x08, true, 0, INTERRUPT_GATE);
         pic8259.clearMask(1);
 
         G2Inline::setInts();
@@ -214,7 +210,7 @@ public:
 static G2Kernel kernel = G2Kernel();
 G2BootConsole console = G2BootConsole(&fb, (psf2_t *)&_binary_font_psf_start,
     bootboot.fb_width, bootboot.fb_height, bootboot.fb_scanline);
-G2PIC pic8259 = G2PIC(32, 48);
+Pc8259 pic8259 = Pc8259(LEADER_PIC_REMAP, FOLLOWER_PIC_REMAP);
 
 int main() {
     // We want to halt all but the bootstrap processor for now

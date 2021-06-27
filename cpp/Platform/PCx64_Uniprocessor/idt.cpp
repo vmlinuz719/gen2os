@@ -1,19 +1,19 @@
-#include <idt.h>
-#include <port.h>
+#include <Platform/PCx64_Uniprocessor/idt.h>
+#include <Platform/PCx64_Uniprocessor/Common.h>
 
-G2IDT::G2IDT(InterruptDescriptor *idt, size_t size) {
-	G2Inline::clearInts();
+PcIDT::PcIDT() {
+	asm("cli");
 	
 	IDTRegister idtr;
-	this->size = idtr.limit = sizeof(InterruptDescriptor) * size;
-	this->idt = idtr.base = idt;
+	idtr.limit = sizeof(InterruptDescriptor) * NUM_DESCR - 1;
+	idtr.base = idt;
 	
-	__asm__ __volatile__ ("lidt (%0)": : "r" (&idtr));
+	asm volatile ("lidt (%0)": : "r" (&idtr));
 }
 
-void G2IDT::registerHandler(int vector, void *wrapper, uint8_t selector,
+void PcIDT::registerHandler(int vector, void *wrapper, uint8_t selector,
 		bool present, uint8_t dpl, uint8_t type) {
-	G2Inline::clearInts();
+	asm("cli");
 	
 	uint64_t dfcall = (uint64_t)wrapper;
 	
@@ -31,5 +31,5 @@ void G2IDT::registerHandler(int vector, void *wrapper, uint8_t selector,
 	idt[vector].offsetMid = (dfcall & 0xffff0000) >> 16;
 	idt[vector].offsetHigh = (dfcall & 0xffffffff00000000) >> 32;
 	
-	G2Inline::setInts();
+	asm("sti");
 }

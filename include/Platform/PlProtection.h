@@ -12,8 +12,6 @@ public:
      * For instance, on x86 this should set a valid GDT and store a pointer to
      * the initial identity map handed to us by BOOTBOOT.
      */
-    PlInterrupt() { }
-    virtual ~PlInterrupt() { }
 
     // The actual methods used to manage *physical* memory
     // are platform independent and do not appear here
@@ -21,7 +19,7 @@ public:
     /* PlPgIdentityMap: Revert to initial identity map that we got from the bootloader
      * Returns: Physical address of current page map
      */
-    virtual void *PlPgIdentityMap();
+    virtual void *PlPgIdentityMap() = 0;
 
     /* Figure out what to do with this later idk */
 };

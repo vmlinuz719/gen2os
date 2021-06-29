@@ -1,9 +1,15 @@
+/* THIS IS A HORRIBLE MESS
+ * IT IS DEPRECATED WHILE I IMPLEMENT THE PLATFORM LAYER
+ * DO NOT EVEN TRY TO USE THIS
+ */
+
 #include <stdint.h>
 #include <bootboot.h>
 #include <bootcon.h>
 #include <port.h>
 #include <kbdtest.h>
-#include <Platform/PCx64_Uniprocessor/gdt.h>
+#include <Platform/PlProtection.h>
+#include <Platform/PCx64_Uniprocessor/Protection.h>
 #include <ksync.h>
 #include <cpuid.h>
 #include <bitmap.h>
@@ -49,8 +55,6 @@ extern "C" void globalCtors() {
 
 // don't bother with global dtors
 
-SegmentDescriptor gdt[8];
-
 extern G2BootConsole console;
 extern Pc8259 pic8259;
 
@@ -61,6 +65,7 @@ class G2Kernel {
 public:
     
     PcIDT table = PcIDT();
+    PcProtection pc = PcProtection();
 
     G2Kernel() {
         int x, y, s=bootboot.fb_scanline;
@@ -80,7 +85,6 @@ public:
         char buf[17];
         char *sz;
 
-        initGDT(gdt, 8);
         pic8259.maskAll();
 
         int2Hex(bootboot.initrd_ptr, buf, sizeof(buf), 16);

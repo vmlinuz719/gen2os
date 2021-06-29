@@ -1,4 +1,6 @@
 #include <gdt.h>
+#include <bootcon.h>
+extern G2BootConsole console;
 
 void initGDT(SegmentDescriptor *gdt, int descriptors) {
 	GDTRegister gdtr;

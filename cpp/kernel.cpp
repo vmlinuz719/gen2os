@@ -9,12 +9,14 @@
 #include <port.h>
 #include <kbdtest.h>
 #include <Platform/PlProtection.h>
+#include <Platform/PlInterrupt.h>
 #include <Platform/PCx64_Uniprocessor/Protection.h>
 #include <ksync.h>
 #include <cpuid.h>
 #include <bitmap.h>
 #include <Platform/PCx64_Uniprocessor/idt.h>
 #include <Platform/PCx64_Uniprocessor/8259.h>
+#include <Platform/PCx64_Uniprocessor/Interrupt.h>
 
 char *int2Hex(uint64_t x, char *buf, size_t size, int radix) {
 	// expect buf to be n characters long - last one gets \0
@@ -63,9 +65,9 @@ Bitmap bmp((uint8_t *) 0, 0);
 class G2Kernel {
 
 public:
-    
-    PcIDT table = PcIDT();
+
     PcProtection pc = PcProtection();
+    PcInterrupt pci = PcInterrupt(0x30, 0x38);
 
     G2Kernel() {
         int x, y, s=bootboot.fb_scanline;
@@ -181,7 +183,8 @@ public:
 
         asm("mov %0, %%cr3" :: "r"(newPML4));
 
-        table.registerHandler(0x31, (void *)kbdTest, 0x08, true, 0, INTERRUPT_GATE);
+        // table.registerHandler(0x31, (void *)kbdTest, 0x08, true, 0, INTERRUPT_GATE);
+        pci.PlIrqRegisterHandler(1, (void *)kbdTest, false, true);
         pic8259.clearMask(1);
 
         G2Inline::setInts();
